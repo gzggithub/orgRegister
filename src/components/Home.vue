@@ -49,7 +49,7 @@
                     </div>
                 </li>
                 <div class="segmentingLine"></div>
-                <li ref="photo" class="item photo clearfix necessary" :class="checkList.photo ? '' : 'error'">
+                <li ref="photos" class="item photo clearfix necessary" :class="checkList.photos ? '' : 'error'">
                     <div class="item-title">机构图片</div>
                     <div class="item-content">
                         <div class="photoTipsBox clearfix">
@@ -63,10 +63,12 @@
                                     <div class="photoDelete" @click="photoDelete(index)"></div>
                                 </li>
                             </ul>
-                            <div class="op-button clearfix">
-                                <label for="photoUploads" class="btn">
+                            <div class="op-button clearfix" v-if="data.photos.length <= 5">
+                                <label for="photoUploads" class="btn" v-show="!photoLoading">
                                     <div></div>
                                 </label>
+                                <!-- 加载中... -->
+                                <div class="loading photoLoading" v-show="photoLoading"></div>
                                 <input ref="photoInputEle" type="file" name="file" id="photoUploads" accept="image/png, image/jpeg, image/gif, image/jpg" style="position: absolute;clip:rect(0px, 0px, 0px, 0px);"
                                 @change="uploadImg($event, 1)">
                             </div>                            
@@ -85,7 +87,7 @@
                 <li ref="description" class="item description clearfix necessary" :class="checkList.description ? '' : 'error'">
                     <div class="item-title">机构简介</div>
                     <div class="item-content">
-                        <textarea name="" id="" cols="50" rows="10" placeholder="请填写机构简介" v-model="data.description"></textarea>
+                        <textarea name="" id="" cols="50" rows="10" placeholder="可从针对多大年龄段的学生、机构特色、经营范围、课程特色、成立年限等几方面进行阐述" v-model="data.description"></textarea>
                     </div>
                     <div class="underline"></div>
                 </li>
@@ -100,11 +102,13 @@
                             <img :src="photoUrl + data.icon" alt="">
                             <div class="logoDelete" @click="logoDelete"></div>
                         </div>
-                        <div class="op-button clearfix">
-                            <label v-if="!data.icon" class="btn" for="logoUploads">
+                        <div class="op-button clearfix" v-show="!data.icon">
+                            <label v-show="!logoLoading" class="btn" for="logoUploads">
                                 <div class="icon"></div>
                                 <!-- <p>选择图片</p> -->
                             </label>
+                             <!-- 加载中 -->
+                            <div class="loading logoLoading" v-show="logoLoading"></div>
                             <input ref="logoInputEle" type="file" name="file" id="logoUploads" style="position:absolute; clip:rect(0 0 0 0);" accept="image/png, image/jpeg, image/gif, image/jpg"
                             @change="uploadImg($event, 2)">
                         </div>
@@ -132,7 +136,7 @@
                     <div class="underline"></div>
                 </li>
                 <li ref="detailedAddress" class="item detailedAddress necessary" >
-                    <textarea v-model="data.detailedAddress" name="" id="" rows="2" placeholder="请输入详细地址,例如道路、门牌号、小区、楼栋号、单元室等" class="detailedAddress"></textarea>
+                    <textarea ref="addressTextarea" v-model="data.detailedAddress" name="" id="" rows="2" placeholder="请输入详细地址,例如道路、门牌号、小区、楼栋号、单元室等" class="detailedAddress"></textarea>
                 </li>
                 <div class="segmentingLine"></div>
                 <li ref="companyName" class="item companyName clearfix necessary" :class="checkList.companyName ? '' : 'error'">
@@ -200,9 +204,9 @@
             </div>
         </div>
         <!-- 示例 -->
-        <div class="photoExample" v-show="false">
+        <!-- <div class="photoExample" v-show="false">
             <div class="imgBox"><img src="https://image.taoerxue.com/" alt=""></div>
-        </div>
+        </div> -->
         <!-- 机构logo -->
         <div class="logoSelect" v-show="false">
             <div class="title">
@@ -217,11 +221,11 @@
             </div>
         </div>
         <!-- 机构logo示例 -->
-        <div class="logoExample" style="display: none;">
+        <!-- <div class="logoExample" style="display: none;">
             <div class="imgBox">
                 <img src="https://image.taoerxue.com/" alt="">
             </div>
-        </div>
+        </div> -->
         <!-- 机构地址省市区县 -->
         <div class="addressSelect" v-show="addressFlag">
             <div class="title">
@@ -244,16 +248,23 @@
             </div>
         </div>
         <!-- 全局提示框 -->
-        <div class="messageBox" v-show="message.flag">
+        <!-- <div class="messageBox" v-show="message.flag">
             <div class="message clearfix">
                 <div class="warning"></div>
                 <span>{{message.value}}</span>
+            </div>
+        </div> -->
+        <div class="messageBox messageBoxSuc" v-show="message.flag">
+            <div class="message messageSuc clearfix" style="width: 60%;line-height: 1.7rem">
+                <div class="warning" style="margin-left: 20px"></div>
+                <!-- <div>提交成功！</div> -->
+                <div style="text-align: center">{{message.value}}</div>
             </div>
         </div>
         <!-- 提交成功提示框 -->
         <div class="messageBoxSuc" v-show="message.flagSuc">
             <div class="messageSuc clearfix">
-                <div class="success" :class=""></div>
+                <div class="success"></div>
                 <div>提交成功！</div>
                 <div>审核结果将以短信形式通知</div>
             </div>
@@ -269,18 +280,18 @@
     import {vueCropper} from 'vue-cropper';
     export default {
         name: 'InstitutionRegister',
-        components: {
-            vueCropper
-        },
+        // components: {
+        //     vueCropper
+        // },
         data() {
             return {
                 // 测试接口地址
-                // baseUrl: 'https://sixsix.taoerxue.com.cn/taoerxue-app/1',
+                baseUrl: 'https://sixsix.taoerxue.com.cn/taoerxue-app/1',
                 // 正式接口地址
-                baseUrl: 'https://newapi.taoerxue.cn/2',
+                // baseUrl: 'https://newapi.taoerxue.cn/2',
                 // 图片地址前缀
-                // photoUrl: 'http://image.taoerxue.cn/',
-                photoUrl: 'https://image.taoerxue.com/',
+                photoUrl: 'http://image.taoerxue.cn/',
+                // photoUrl: 'https://image.taoerxue.com/',
                 size: {
                     screenWidth: null,
                     screenHeght: null,
@@ -301,6 +312,7 @@
                 // 图片上传token
                 uploadToken: "",
                 // 机构图片相关变量
+                photoLoading: false,
                 photoOption: {
                     fileChoiced: false,
                     img: ''
@@ -308,6 +320,7 @@
                 photoList: [],
                 examplePhotoList: [],
                 // 机构LOGO相关变量
+                logoLoading: false,
                 logoOption: {
                     fileChoiced: false,
                     img: ''
@@ -384,30 +397,105 @@
                     value: "",
                     fnTimeout: ""
                 },
+                scrollTop: '',
             }
+        },
+        created: function() {
+            // 获取机构类型列表
+            this.getType();
+            // 暂时不用
+            window.onscroll = function() {
+                //变量scrollTop是滚动条滚动时，距离顶部的距离
+                var scrollTop = document.documentElement.scrollTop||document.body.scrollTop;
+                //变量windowHeight是可视区的高度
+                var windowHeight = document.documentElement.clientHeight || document.body.clientHeight;
+                //变量scrollHeight是滚动条的总高度
+                var scrollHeight = document.documentElement.scrollHeight||document.body.scrollHeight;
+                //滚动条到底部的条件
+                if(scrollTop+windowHeight==scrollHeight){
+                //写后台加载数据的函数
+                    console.log("距顶部"+scrollTop+"可视区高度"+windowHeight+"滚动条总高度"+scrollHeight);
+                }
+            }
+        },
+        mounted: function() {
+            // 地图实例
+            this.mapObj = new AMap.Map('amap-container', {
+                resizeEnable: true,
+                zoom: 16
+            });
+            setTimeout(() => {
+                // 获取省份列表
+                this.getProvinceList();
+                AMap.service('AMap.Geocoder', () => {
+                    const geocoder = new AMap.Geocoder({
+                        extensions: "all"
+                    });
+                    // 地图组件点击事件处理
+                    this.mapObj.on('click', (e) => {
+                        // 清除已有标记点
+                        this.mapObj.remove(this.markers);
+                        // 经纬度写入
+                        this.data.lng = e.lnglat.lng;
+                        this.data.lat = e.lnglat.lat;
+                        // 生成当前标记点
+                        const marker = new AMap.Marker({
+                            map: this.mapObj,
+                            bubble: true
+                        });
+                        marker.setPosition(e.lnglat);
+                        this.mapObj.setCenter(marker.getPosition());
+                        this.markers.push(marker);
+                        // 根据经纬度获取其他地址信息
+                        geocoder.getAddress([e.lnglat.lng, e.lnglat.lat], (status, result) => {
+                            if (status === 'complete' && result.info === 'OK') {
+                                // address字段写入
+                                this.data.address=result.regeocode.formattedAddress;
+                                // 其他地址信息写入
+                                this.setAddress(5,result.regeocode.addressComponent);
+                            }
+                        });
+                    });
+                })
+            }, 500)
+            // console.log(this.$refs);
+            // console.log(this.$refs.area.offsetTop);
+            // this.$nextTick(() => {
+            //     console.log(this.$refs.area.offsetTop);
+            // });
+            // window.addEventListener('scroll', this.setScrollTop(this.$refs.area.offsetTop), true)
         },
         methods: {
             // 设置页面滚动高度
             setScrollTop(value, flag) {
                 if (flag) {
+                    console.log(value)
                     document.documentElement.scrollTop = value;
                     window.pageYOffset = value;
                     document.body.scrollTop = value;
+                    console.log(document.documentElement.scrollTop);
+                    console.log(window.pageYOffset);
+                    console.log(document.body.scrollTop);
                 }
             },
-            // 回到顶部
-            returnTop() {
-                document.documentElement.scrollTop = 0;
-                window.pageYOffset = 0;
-                document.body.scrollTop = 0;
+            // 获得页面向左、向上卷动的距离
+            getScroll() {
+                return {
+                    left: window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0,
+                    top: window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+                };
             },
+            // 返回
             returnBack() {
                 // 整个页面的状态
                 this.hiddenFlag = true;
                 // 机构类型状态
                 this.typeFlag = false;
                 // 机构地址状态
-                this.addressFlag = false;                
+                this.addressFlag = false;
+                this.$nextTick(() => {
+                    this.setScrollTop(this.$refs.icon.offsetTop, true);
+                })
             },
             // 保存
             save(typeName) {
@@ -688,45 +776,14 @@
                     }                    
                 }
             },
-            // 选择一级机构类型
-            chooseParentOrgType(event, index, id, orgName) {
-                this.chooseTypeFlag = true;
-                this.orgIndex = index;
-            },
-            // 选择二级机构类型
-            chooseOrgType(event, subIndex, id, orgName, allType) {
-                if (!subIndex) {
-                    if(this.typeIndexSaved.length === 0) {
-                        let tempAllOrgType = [];
-                        allType.forEach((item, index) => {
-                            tempAllOrgType.push(item.id);
-                            this.typeIndexSaved.push(index);
-                        })
-                        this.data.typeIds = tempAllOrgType;
-                        this.orgSubIndex = subIndex;
-                    } else {
-                        this.typeIndexSaved = [];
-                        this.data.typeIds = [];
-                        this.orgSubIndex = !subIndex;
-                    }
-                }
-                if (subIndex) {                    
-                    this.typeName = orgName;
-                    this.typeIndexSaved.push(subIndex);
-                    this.data.typeIds.push(id);
-                    // this.orgSubIndex = subIndex;
-                }
-            },
             // 选择机构类型
             chooseOrg() {
-                this.hiddenFlag = false,
+                this.hiddenFlag = false;
                 this.typeFlag = true;
-                // this.selectOrgType(0, 0, "allIndex")
             },
             // 获取机构类型列表
             getType() {
                 axios({
-                    // url: '/2/org/getAllOrgType',
                     url: this.baseUrl + '/org/getAllOrgType',
                     type: 'json',
                     method: 'get'
@@ -744,37 +801,12 @@
                             data.push(item);
                         })
                         this.typeList = data;
+                    } else {
+                        alert(response.data);
                     }
                 }).catch((error) => {
-
+                    alert(error);
                 });
-            },
-            choosseOrgTypeSave(idx) {
-                const _this = this;
-                console.log(this.typeList)
-                console.log(idx)
-                var checked = this.typeList[idx].checked;
-                console.log(checked);
-                this.typeList[idx].checked = checked === true ? false : true;
-                console.log(this.typeList);
-               
-                // var _this = this;
-                // this.typeFlag = !this.typeFlag;
-                // if (this.typeFlag) {
-                //     this.typeList.forEach((item, index) => {
-                //         if (item.checked) {
-                //             _this.typeIndexSaved.push(index);
-                //         }
-                //         if (item) {
-                //             this.typeList.forEach((item) => {
-                //                 item.checked = false;
-                //             })
-                //         }
-                //     })
-                // }
-                // this.typeIndexSaved.forEach((item) => {
-                //     _this.typeList[item].checked = true;
-                // })
             },
             // 验证码倒计时监听函数
             countDownCheck() {
@@ -792,7 +824,7 @@
                 if(!this.codeButtonStatus){
                     return
                 }
-                const regPhone=/^1[0-9]{10}$/;
+                const regPhone = /^1[0-9]{10}$/;
                 console.log(this.data.managerPhone)
                 if (regPhone.test(this.data.managerPhone)) {
                     axios({
@@ -849,8 +881,10 @@
                 }
                 // 1：机构图片
                 if (num === 1) {
+                    this.photoLoading = true;
                     if (this.data.photos.length >= 5) {
                         this.setMessage("机构图片最多上传5张");
+                        this.photoLoading = false;
                         return false;
                     }
                     setTimeout(() => {
@@ -859,6 +893,7 @@
                 }
                 // 2：机构logo
                 if (num === 2) {
+                    this.logoLoading = true;
                     setTimeout(() => {
                         this.uploadImgToQiniu01(file);
                     }, 500);
@@ -895,12 +930,14 @@
                     method: 'get',
                     processData: false,
                 }).then((response) => {
-                    console.log(response.data.data);
                     if (response.result = "0") {
                         this.uploadToken = response.data.data;                        
+                    } else {
+                        alert(response);
                     }
                 }).catch((error) => {
-                    this.setMessage("失败");
+                    this.setMessage(error);
+                    alert(error);
                 });
             },
             // 机构图片（上传图片到七牛，网上提供的方法）(此方法在苹果机上不能用)
@@ -943,7 +980,7 @@
 
                 });
             },
-            // 机构图片（上传图片到七牛01）(官方文档给的)
+            // 机构图片（上传图片到七牛）(官方文档给的)
             uploadImgToQiniu(file) {
                 var _this = this;
                 var file = file;
@@ -956,10 +993,12 @@
                 };
                 var observer = {
                     next (res) {
-                        console.log(res)
+                        console.log(res);
+                        _this.photoLoading = false;
                     },
                     error (err) {
-                        console.log(err)
+                        console.log(err);
+                        _this.photoLoading = false;
                         if (err) {
                             _this.setMessage(err);
                         } else {
@@ -968,7 +1007,8 @@
                     }, 
                     complete (res) {
                         console.log(res);
-                        _this.setMessage("图片提交成功");
+                        _this.photoLoading = false;
+                        // _this.setMessage("图片提交成功");
                         _this.data.photos.push(res.key);
                         console.log(_this.data.photos);
                         //上传成功，把input的value设置为空，不然 无法两次选择同一张图片
@@ -991,10 +1031,12 @@
                 };
                 var observer = {
                     next (res) {
-                        console.log(res)
+                        console.log(res);
+                        _this.logoLoading = false;
                     },
                     error (err) {
-                        console.log(err)
+                        console.log(err);
+                        _this.logoLoading = false;
                         if (err) {
                             _this.setMessage(err);
                         } else {
@@ -1003,7 +1045,8 @@
                     }, 
                     complete (res) {
                         console.log(res);
-                        _this.setMessage("图片提交成功");
+                        _this.logoLoading = false;
+                        // _this.setMessage("图片提交成功");
                         _this.data.icon = res.key;
                         console.log(_this.data.icon);
                         //上传成功，把input的value设置为空，不然 无法两次选择同一张图片
@@ -1053,23 +1096,23 @@
                     const file = this.dataURLtoFile(data, "effective.jpg");
                     const formData = new FormData();
                     formData.append("file", file);
-                    axios({
-                        url: '/w/file/upload',
-                        type: 'json',
-                        method: 'post',
-                        processData: false,
-                        data: formData
-                    }).then((response) => {
-                        console.log(response);
-                        if (response.code = "0") {
-                            this.data.icon = response.data.data;
-                            this.logoOption.img = "";
-                            this.logoOption.fileChoiced = false;
-                            this.$refs.logoInputEle.value = "";
-                        }
-                    }).catch((error) => {
-                        this.setMessage("图片提交失败");
-                    });
+                    // axios({
+                    //     url: '/w/file/upload',
+                    //     type: 'json',
+                    //     method: 'post',
+                    //     processData: false,
+                    //     data: formData
+                    // }).then((response) => {
+                    //     console.log(response);
+                    //     if (response.code = "0") {
+                    //         this.data.icon = response.data.data;
+                    //         this.logoOption.img = "";
+                    //         this.logoOption.fileChoiced = false;
+                    //         this.$refs.logoInputEle.value = "";
+                    //     }
+                    // }).catch((error) => {
+                    //     this.setMessage("图片提交失败");
+                    // });
                 })
             },
             // 机构LOGO删除
@@ -1124,6 +1167,7 @@
             },
             // 地址字段写入
             setAddress(type, value, value02) {
+                const vm = this;
                 // 写入已选省份信息并清除下级信息
                 if(type===1){
                     if (!value) {
@@ -1261,7 +1305,6 @@
                         this.realdOnly = true;
                         return false
                     }
-                    console.log(value)
                     this.hiddenFlag = true;
                     this.addressFlag = false;
                     this.typeFlag = false;
@@ -1276,7 +1319,21 @@
                     // this.data.address="";
                     this.data.detailedAddress="";
                     // 不知道为什么获取的offsetTop是0
-                    this.setScrollTop(this.$refs.area.offsetTop, true);
+                    console.log(vm.$refs);
+                    console.log(vm.$refs.area.scrollTop);
+                    console.log(vm.$refs.area.baseURI);
+                    console.log(vm.$refs.area.clientWidth);
+                    console.log(vm.$refs.area.hidden);
+                    // 通过下面的方法可以获得offsetTop
+                    vm.$nextTick(() => {
+                        console.log(vm.$refs.area.offsetTop);
+                        console.log(vm.$refs);
+                        console.log(vm.$refs.addressTextarea.autofocus);
+                        vm.$refs.addressTextarea.autofocus = true;
+                        vm.$refs.addressTextarea.focus()
+                        console.log(vm.$refs.addressTextarea.autofocus);
+                        vm.setScrollTop(vm.$refs.area.offsetTop, true);
+                    });
                 }
                 // 地址信息整体写入
                 if(type===5){
@@ -1376,135 +1433,150 @@
             },
             // 信息提交
             submit() {
-                if(this.submitButtonFlag && this.nameCheck() && this.isTelephone() && this.licenseNumberCheck()) {
-                    axios({
-                        url: this.baseUrl + '/org/saveOrg',
-                        type: 'json',
-                        method: 'post',
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        data: this.data,
-                        transformRequest: [(data) => {
-                            let ret = '';
-                            for (let it in data) {
-                                ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-                            }
-                            ret = ret.slice(0, ret.length - 1);
-                            return ret
-                        }]
-                    }).then((response) => {
-                        console.log(response);
-                        if (response.data.result === "0") {
-                            this.setMessage("提交成功，请耐心等待审核通过");
-                            this.message.flagSuc = true;
-                            this.returnTop();
-                            this.getType();
-                            this.getProvinceList();
-                            this.photoOption = {
-                                fileChoiced: false,
-                                img: ''
+                if (this.isNUll()) {
+                   if(this.submitButtonFlag && this.nameCheck() && this.isTelephone() && this.licenseNumberCheck()) {
+                        axios({
+                            url: this.baseUrl + '/org/saveOrg',
+                            type: 'json',
+                            method: 'post',
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
                             },
-                            this.photoList = [],
-                            this.logoOption = {
-                                fileChoiced: false,
-                                img: ''
-                            },
-                            this.data = {
-                                source: 0,
-                                name: "",
-                                typeIds: [],
-                                telephone: "",
-                                managerName: "",
-                                managerPhone: "",
-                                code: "",
-                                description: "",
-                                photos: [],
-                                icon: "",
-                                provinceName: "",
-                                provinceId: null,
-                                cityName: "",
-                                cityId: null,
-                                areaName: "",
-                                areaId: null,
-                                street: "",
-                                area: "",
-                                detailedAddress: "",
-                                companyName: "",
-                                licenseNumber: ""
-                            },
-                            this.codeButtonStatus = true,
-                            this.countDown = 0,
-                            this.fn_countDown = "",
-                            this.cityList = [],
-                            this.areaList = [],
-                            this.streetList = [],
-                            // 清除地图已有标记点
-                            this.mapObj.remove(this.markers);
-                            this.markers = [],
-                            this.checkList = {
-                                name: true,
-                                typeIds: true,
-                                telephone: true,
-                                managerName: true,
-                                managerPhone: true,
-                                code: true,
-                                photos: true,
-                                description: true,
-                                icon: true,
-                                area: true,
-                                detailedAddress: true,
-                                companyName: true,
-                                licenseNumber: true
+                            data: this.data,
+                            transformRequest: [(data) => {
+                                let ret = '';
+                                for (let it in data) {
+                                    ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+                                }
+                                ret = ret.slice(0, ret.length - 1);
+                                return ret
+                            }]
+                        }).then((response) => {
+                            console.log(response);
+                            if (response.data.result === "0") {
+                                this.setMessage("提交成功，请耐心等待审核通过");
+                                this.message.flagSuc = true;                            
+                                this.photoOption = {
+                                    fileChoiced: false,
+                                    img: ''
+                                },
+                                this.photoList = [],
+                                this.logoOption = {
+                                    fileChoiced: false,
+                                    img: ''
+                                },
+                                this.data = {
+                                    source: 0,
+                                    name: "",
+                                    typeIds: [],
+                                    telephone: "",
+                                    managerName: "",
+                                    managerPhone: "",
+                                    code: "",
+                                    description: "",
+                                    photos: [],
+                                    icon: "",
+                                    provinceName: "",
+                                    provinceId: null,
+                                    cityName: "",
+                                    cityId: null,
+                                    areaName: "",
+                                    areaId: null,
+                                    street: "",
+                                    area: "",
+                                    detailedAddress: "",
+                                    companyName: "",
+                                    licenseNumber: ""
+                                },
+                                this.codeButtonStatus = true,
+                                this.countDown = 0,
+                                this.fn_countDown = "",
+                                // 状态没有设置为默认值导致省份没有显示
+                                this.hiddenFlag = true;
+                                this.addressFlag = false;
+                                this.typeFlag = false;
+                                this.provinceFlag = true;
+                                this.cityFlag = false;
+                                this.areaFlag = false;
+                                this.streetFlag = false;
+                                this.cityList = [],
+                                this.areaList = [],
+                                this.streetList = [],
+                                // 清除地图已有标记点
+                                // this.mapObj.remove(this.markers);
+                                // this.markers = [],
+                                this.checkList = {
+                                    name: true,
+                                    typeIds: true,
+                                    telephone: true,
+                                    managerName: true,
+                                    managerPhone: true,
+                                    code: true,
+                                    photos: true,
+                                    description: true,
+                                    icon: true,
+                                    area: true,
+                                    detailedAddress: true,
+                                    companyName: true,
+                                    licenseNumber: true
+                                }
+                                console.log(this.provinceList);
+                                this.getType();
+                                this.getProvinceList();
+                            }else{
+                                this.setMessage(response.data.message);
                             }
-                        }else{
-                            this.setMessage(response.data.message);
-                        }
-                    }).catch((error) => {
-                        this.setMessage("提交失败");
-                    });
-                }else{
-                    let flag=true;
-                    Object.keys(this.checkList).forEach((key) => {
-                        console.log(key)
-                        if(key==="area"){
-                            if(!this.data.street){
-                                this.addressTips="机构地址不能为空";
-                                this.checkList.area=false;
-                                this.setScrollTop(this.$refs[key].offsetTop, flag);
-                                flag=false;
-                                return
-                            }
-                            if(!this.data.detailedAddress){
-                                this.addressTips="机构详细地址不能为空";
-                                this.checkList.area=false;
-                                this.setScrollTop(this.$refs[key].offsetTop, flag);
-                                flag=false;
-                                return
-                            }
-                        }
-                        // console.log(this.data[key]);
-                        if(!this.data[key]){
-                            console.log(this.data[key])
-                            if(key==="photos"&&flag===true){
-                                if(this.photoOption.fileChoiced){
-                                    this.setMessage("机构图片未提交");
+                        }).catch((error) => {
+                            this.setMessage("提交失败");
+                        });
+                    } else {
+                        // this.isNULL();
+                        let flag=true;
+                        Object.keys(this.checkList).forEach((key) => {
+                            console.log(key)
+                            if(key==="area"){
+                                if(!this.data.street){
+                                    this.addressTips="机构地址不能为空";
+                                    this.checkList.area=false;
+                                    this.setScrollTop(this.$refs[key].offsetTop, flag);
+                                    flag=false;
+                                    return
+                                }
+                                if(!this.data.detailedAddress){
+                                    this.addressTips="机构详细地址不能为空";
+                                    this.checkList.area=false;
+                                    this.$nextTick(() => {
+                                        this.setScrollTop(this.$refs[key].offsetTop, flag);
+                                    })                                
+                                    flag=false;
+                                    return
                                 }
                             }
-                            if(key==="icon"&&flag===true){
-                                if(this.logoOption.fileChoiced){
-                                    this.setMessage("机构LOGO未提交");
+                            // console.log(this.data[key]);
+                            if(!this.data[key]){
+                                console.log(this.data[key])
+                                if(key==="photos"&&flag===true){
+                                    if(this.photoOption.fileChoiced){
+                                        this.setMessage("机构图片未提交");
+                                    }
                                 }
+                                if(key==="icon"&&flag===true){
+                                    if(this.logoOption.fileChoiced){
+                                        this.setMessage("机构LOGO未提交");
+                                    }
+                                }
+                                console.log(this.data)
+                                this.checkList[key]=false;
+                                console.log(this.checkList);
+                                this.setMessage("信息填写不完整");
+                                this.$nextTick(() => {
+                                    this.setScrollTop(this.$refs[key].offsetTop, flag);
+                                });
+                                flag=false;
                             }
-                            console.log(this.data)
-                            this.checkList[key]=false;
-                            console.log(this.checkList);
-                            this.setMessage("信息填写不完整");
-                            this.setScrollTop(this.$refs[key].offsetTop, flag);
-                            flag=false;
-                        }
-                    })
-                }
+                        })
+                    } 
+                }                
             },
             // 数组去重
             uniq(array){
@@ -1515,6 +1587,104 @@
                     }
                 }
                 return temp;
+            },
+            // 为空校验
+            isNUll() {
+                if(!this.data.name) {
+                    this.setMessage("机构名称不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.name.offsetTop, true);
+                    });                 
+                    return false;
+                }
+                if(!this.data.typeIds.length) {
+                    this.setMessage("机构类型不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.typeIds.offsetTop, true);
+                    });                    
+                    return false;
+                }
+                if(!this.data.telephone) {
+                    this.setMessage("机构电话不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.telephone.offsetTop, true);
+                    });                    
+                    return false;
+                }
+                if(!this.data.managerName) {
+                    this.setMessage("管理员不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.managerName.offsetTop, true);
+                    });                    
+                    return false;
+                }
+                if(!this.data.managerPhone) {
+                    this.setMessage("手机号码不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.managerPhone.offsetTop, true);
+                    });                    
+                    return false;
+                }
+                if(!this.data.code) {
+                    this.setMessage("手机验证码不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.code.offsetTop, true);
+                    })                    
+                    return false;
+                }
+                if(!this.data.photos.length) {
+                    this.setMessage("机构图片不能为空");
+                    this.$nextTick(() => {
+                         this.setScrollTop(this.$refs.photos.offsetTop, true);
+                    })                   
+                    return false;
+                }
+                if(!this.data.description) {
+                    this.setMessage("机构简介不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.description.offsetTop, true);
+                    });                    
+                    return false;
+                }
+                if(!this.data.icon) {
+                    this.setMessage("机构LOGO不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.icon.offsetTop, true);
+                    })                    
+                    return false;
+                }
+                console.log(this.data.area)
+                console.log(this.data.detailedAddress)
+                if(!this.data.area) {
+                    this.setMessage("机构地址不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.area.offsetTop, true);
+                    });                    
+                    return false;
+                }
+                if(!this.data.detailedAddress) {
+                    this.setMessage("机构详细地址不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.area.offsetTop, true);
+                    });                    
+                    return false;
+                }
+
+                if(!this.data.companyName) {
+                    this.setMessage("企业名称不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.companyName.offsetTop, true);
+                    });                    
+                    return false;
+                }
+                if(!this.data.licenseNumber) {
+                    this.setMessage("执照号码不能为空");
+                    this.$nextTick(() => {
+                        this.setScrollTop(this.$refs.licenseNumber.offsetTop, true);  
+                    });                   
+                    return false;
+                }
+                return true;
             },
             // 机构名称校验
             nameCheck() {
@@ -1527,10 +1697,10 @@
                 }
                 console.log(this.data.name);
             },
+            // 机构电话校验
             isTelephone() {
                 const isPhone = /^([0-9]{3,4}-)?[0-9]{7,8}$/;
-                // const isMob = /^1[3|4|5|7|8][0-9]{9}$/;
-                const isMob=/^((\+?86)|(\(\+86\)))?(13[012356789][0-9]{8}|15[012356789][0-9]{8}|18[02356789][0-9]{8}|147[0-9]{8}|1349[0-9]{7})$/;
+                const isMob = /^1[0-9]{10}$/;
                 if (isPhone.test(this.data.telephone) || isMob.test(this.data.telephone)) {
                     return true;
                 } else {
@@ -1548,7 +1718,48 @@
                 }
             },
         },
+        computed: {
+            // rollingForbiddenFlag: function() {
+            //     return this.photoExample.flag || this.logoExample.flag
+            // },
+            orgName: function () {
+                return this.data.name.length > 15 ? this.data.name.slice(0, 14) + '...' : this.data.name;
+            },
+            typeNames: function() {
+                var t = "";
+                this.typeList.forEach((item) => {
+                    if (item.sysOrgTypes) {
+                        item.sysOrgTypes.forEach((subItem) => {
+                            if (subItem.checked) {
+                                t += subItem.name + "/"
+                            }
+                        })
+                    }
+                })
+                t = t.slice(0, t.length - 1);
+                t = t.length > 5 ? t.slice(0, 18) + "..." : t;
+                return t;
+            },
+            isPhoneNumber: function() {
+                return !!/^1[3|4|5|7|8][0-9]{9}$/.test(this.data.managerPhone)
+            },
+            provinceName: function() {
+                return this.data.provinceName ? this.data.provinceName.length > 5 ? this.data.provinceName.slice(0, 4) + "..." : this.data.provinceName : "请选择省份"
+            },
+            cityName: function() {
+                return this.data.cityName ? this.data.cityName.length > 5 ? this.data.cityName.slice(0, 4) + "..." : this.data.cityName : "请选择市"
+            },
+            areaName: function() {
+                return this.data.areaName ? this.data.areaName.length > 5 ? this.data.areaName.slice(0, 4) + "..." : this.data.areaName : "请选择区"
+            },
+            street: function() {
+                return this.data.street ? this.data.street.length > 5 ? this.data.street.slice(0, 4) + "..." : this.data.street : "请选择街道"
+            }
+        },
         watch: {
+            scrollTop() {
+                this.setScrollTop();
+            },
             typeList: {
                 handler(data) {
                     // 一级
@@ -1605,124 +1816,28 @@
                     Object.keys(this.checkList).forEach((key) => {
                         if(key==="area"){
                             // if(this.data.lng&&this.data.detailedAddress){
-                            if(this.data.detailedAddress){
+                            if(this.data.area && this.data.detailedAddress){
                                 this.checkList.area=true;
                             }else {
                                 flag=false;
                             }
                             return
                         }
-                        // if (key==="name") {
-                        //     if (this.data.name && this.data.name.length > 20) {
-                        //         console.log(33333)
-                        //         this.checkList.name = false;
-                        //     } else {
-                        //         flag=false;
-                        //     }
-                        //     return                             
-                        // }
                         if(this.data[key]){
                             this.checkList[key]=true;
                         }else{
-                            console.log(999999)
                             flag=false;
                         }
                     })
                     if(flag){
-                        console.log(45454545)
                         this.submitButtonFlag=true
                     }else{
-                        console.log(333444444)
                         this.submitButtonFlag=false
                     }
                 },
                 deep: true
             },
-        },
-        computed: {
-            rollingForbiddenFlag: function() {
-                return this.photoExample.flag || this.logoExample.flag
-            },
-            orgName: function () {
-                return this.data.name.length > 15 ? this.data.name.slice(0, 14) + '...' : this.data.name;
-            },
-            typeNames: function() {
-                var t = "";
-                this.typeList.forEach((item) => {
-                    if (item.sysOrgTypes) {
-                        item.sysOrgTypes.forEach((subItem) => {
-                            if (subItem.checked) {
-                                t += subItem.name + "/"
-                            }
-                        })
-                    }
-                })
-                t = t.slice(0, t.length - 1);
-                t = t.length > 5 ? t.slice(0, 18) + "..." : t;
-                return t;
-            },
-            isPhoneNumber: function() {
-                return !!/^1[3|4|5|7|8][0-9]{9}$/.test(this.data.managerPhone)
-            },
-            provinceName: function() {
-                return this.data.provinceName ? this.data.provinceName.length > 5 ? this.data.provinceName.slice(0, 4) + "..." : this.data.provinceName : "请选择省份"
-            },
-            cityName: function() {
-                return this.data.cityName ? this.data.cityName.length > 5 ? this.data.cityName.slice(0, 4) + "..." : this.data.cityName : "请选择市"
-            },
-            areaName: function() {
-                return this.data.areaName ? this.data.areaName.length > 5 ? this.data.areaName.slice(0, 4) + "..." : this.data.areaName : "请选择区"
-            },
-            street: function() {
-                return this.data.street ? this.data.street.length > 5 ? this.data.street.slice(0, 4) + "..." : this.data.street : "请选择街道"
-            }
-        },
-        created: function() {
-            // 获取机构类型列表
-            this.getType();
-        },
-        mounted: function() {
-            this.returnTop();
-            // 地图实例
-            this.mapObj = new AMap.Map('amap-container', {
-                resizeEnable: true,
-                zoom: 16
-            });
-            setTimeout(() => {
-                // 获取省份列表
-                this.getProvinceList();
-                AMap.service('AMap.Geocoder', () => {
-                    const geocoder = new AMap.Geocoder({
-                        extensions: "all"
-                    });
-                    // 地图组件点击事件处理
-                    this.mapObj.on('click', (e) => {
-                        // 清除已有标记点
-                        this.mapObj.remove(this.markers);
-                        // 经纬度写入
-                        this.data.lng = e.lnglat.lng;
-                        this.data.lat = e.lnglat.lat;
-                        // 生成当前标记点
-                        const marker = new AMap.Marker({
-                            map: this.mapObj,
-                            bubble: true
-                        });
-                        marker.setPosition(e.lnglat);
-                        this.mapObj.setCenter(marker.getPosition());
-                        this.markers.push(marker);
-                        // 根据经纬度获取其他地址信息
-                        geocoder.getAddress([e.lnglat.lng, e.lnglat.lat], (status, result) => {
-                            if (status === 'complete' && result.info === 'OK') {
-                                // address字段写入
-                                this.data.address=result.regeocode.formattedAddress;
-                                // 其他地址信息写入
-                                this.setAddress(5,result.regeocode.addressComponent);
-                            }
-                        });
-                    });
-                })
-            }, 500)
-        }
+        },               
     };
 </script>
 

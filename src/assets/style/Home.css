@@ -192,7 +192,9 @@
 }
 
 .institution-register .content-box li.photo .item-content .op-button {
-    margin-bottom: .1rem
+    margin-bottom: .1rem;
+    position: relative;
+    height: 50px;
 }
 
 .institution-register .content-box li.photo .item-content .op-button label.btn {
@@ -262,7 +264,10 @@
 }
 
 .institution-register .content-box li.icon .item-content .op-button {
-    margin-bottom: .1rem
+    margin-bottom: .1rem;
+    position: relative;
+    width: 50px;
+    height: 50px;
 }
 
 .institution-register .content-box li.icon .item-content .op-button label.btn {
@@ -422,6 +427,8 @@
 
 .institution-register .typeSelect {
     width: 100%;
+    background: #FFF;
+    padding-top: 1rem;
     position: absolute;
     top: 0;
     left: 0
@@ -429,8 +436,12 @@
 
 .institution-register .typeSelect .title {
     width: 100%;
+    background: #FFF;
     height: 1rem;
-    position: relative
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 99999;
 }
 
 .institution-register .typeSelect .title p {
@@ -520,9 +531,9 @@
 }
 /* new css */
 .institution-register .typeSelect ul.items li.item ul.subItems {
-    width: 88%;
+    width: 80%;
     height: 1.08rem;
-    padding: 0 .32rem;
+    padding: 0 .12rem 0 .32rem;
     /* border-bottom: 1px solid #eee; */
     position: absolute;
     top: 0;
@@ -531,7 +542,7 @@
 .institution-register .typeSelect ul.items li.item ul.subItems li.subItem {
     width: 100%;
     height: 1.08rem;
-    padding: 0 .32rem;
+    padding: 0 0 0 .32rem;
     border-bottom: 1px solid #eee
 }
 
@@ -795,10 +806,10 @@
 }
 
 .institution-register .messageBox .message .warning {
-    width: 14px;
+    width: 26px;
     height: 100%;
     float: left;
-    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABJ0lEQVQ4jY3TPyuFURwH8M89Los/ySA2MshoIIXBJIPBwKAMLN7BFYOXIBlMFkkob8CAEQPKYGcwSLoT+dO9hvs8dTuee/nWqdPv++ec0+93cuXzVhH6MI/RZJ/HA65whJtqcS4KWEUB7XFqgk9sYw3v1QE57GApMryhhJaofoIZvIekUMgwlzGHCXxE3CQ20hv04i7jlDL68ZSstogvYTxgIcOcPqs54fIZfMBiwFgGmaIxWVkBMBzQ84+Ahhp8Z0iuUgtNfwQIeKwTUMZXHf4ljwuVVmVhBcU6AbcB+373OcUABusE7AbcY7OGYB3LNbgDnKaj3IRjTEeiV5X574rql5hCMe3AJ2axhe8qYUeGeS818/s3wojKdA6hO6k94xqHOKsW/wBWkj5BycKG8wAAAABJRU5ErkJggg==) no-repeat 50%/14px 14px
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAA0CAYAAADFeBvrAAAEJUlEQVRoQ+2a74tVRRjHv8+Zs6uLaRF3rkL0RiOKoCKCCoRV79lcSxJaIg1f2Kso3wuF9aLU/oIK3ymIFlTQYqXtuYuCCEFEBVFURm8C985FYitc3TPnibl3N+7u/XXOzBxZr55Xl8vMM89nnplnnueZIQzYRwPGg9tAK92iXi3EZ9evSQLeDOJRYn6IArofQAmMtY2JIPwNoM4p/8JEP4LpfJjSBdo+86+vifICNB/LcQL2AXgOwEhO5a4CmGTg2FCkzuTs29bcCSiZLj9PKb/FwCOuijQNiO85oLfDbbVPbeVZAXG1vEkzfwBgzHbgPv2mBNGrVKldyis/N1ASl3YT6CgD6/IOlqc9AbMMfiWM6h/m7Je9ua7Kd5hxMHsP95ZEOCQq6s2skjJbSMfyPQZeyyrYZzsC3heR2p9FZiYgR8swAb8a78fAvVmU6tQmq6X6Apk9A9ApS0UuC6IJqtQumv5JtbQHjGMADdvJ4z399lRPIOPNUuZvbR2AEHiBtqqPW5XXsTzMwBs2QMZRBESP9fJ+PYGSWH7l4prFHfpOevLKbKvyPF0a1SmdswFa6DMVRurpbv27AplDEyl/4jAwhFgzQlv/mFsCFJef0uDGErT+Aprodvh2BdKx/M41AigKyEQUIlKPdnQenf5ciM2+tJ7BhY5FARnxDOzoFPt1tFASS3M6v7iSgQB8FEZq93Id24BMCqBFqiyi5jb+Ii0E4KrQgVyeerQBzU+VtxOxcxhv6AoGAjOND43VzrbOZDtQLI8Q8LrrcrshQMC7Q5Facqa1ASVTpc9AZBI1569oC4F5Mhyr7+ppIV2VPzHjAWeaG7DkiPCzqKgH+wEpZpRuEqC6qCjZGyiWcwysuimAgGsiUqtvMaCqHLAl59MpgDZQVJtZGpzKcQ04h1VGZian4NNtE+GgqKjDrUBJLE1+NOFjj2Zz27E8wp4OVoDnCTgUUHIcgRjRaXAAjJe9wDQD1P4Hq8/Qx5fi3eRkCn18BqcFA2ULTo0SvtKHxsYF/mTw6eZv2snAPZ5As6UPZjBfCR6A02I1v0Sb6+bWAXyhtFbP0UkAO12hciV4ZjD3FJz/Esn1TTQ+e2WJ2z6z7m4dDl8C6C5bqNwpeGPZuRZJGF+EY+rZTkonVfk5GM/YAsGmSLKwl+zLWITzYUVt6QJ0DoxRSyC7MlZjzTsVGnleI3h8VVT7oVXxa3H5YYH0G4CG8gI5FxqbVrIvBRPhN03B3uFtM18bWden1z8hOD3BjPvywjTbO5aCFwd1KdYTgcH4vSGLsJHZ7ubdW7H+f6hBuk7xYSm7JdaIqIu58FpUaKCuJBehBurSuHXpDMy1/vL9YGK/ANjHlg8vCJhMV8LDi+Vg/Z7GMPAPEdSKfxpj68GK6Nf30riIQYuUeRuoyNn1Ifs/ywMhU6NtDWoAAAAASUVORK5CYII=) no-repeat 50%/26px 26px;
 }
 
 .institution-register .messageBox .message span {
